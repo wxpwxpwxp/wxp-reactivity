@@ -18,17 +18,20 @@
 //   }
 // }
 
-import { PROXY_KEY, ORIGINAL_KEY } from './constants.js';
+import { PROXY_KEY, ORIGINAL_KEY } from './constants';
 
 export interface Ref<T> {
   _value: T;
   _isRef: boolean;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  value: any;
 }
 
 export function ref<T>(value: T): Ref<T> {
   const target = new Proxy({
     _value: value,
-    _isRef: true
+    _isRef: true,
+    value: undefined
   }, {
     get(target, key) {
       if (key === PROXY_KEY)

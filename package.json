@@ -1,26 +1,25 @@
 {
-  "name": "my_ast_demo",
+  "name": "wxp-reactivity",
   "version": "1.0.0",
-  "description": "ast demo",
-  "main": "./dist/index.js",
+  "description": "wxp-reactivity",
+  "main": "./dist/lib/index.js",
   "scripts": {
     "test": "jest",
     "lint:script": "eslint --ext .ts src",
     "lint": "npm run lint:script -- --fix",
     "lint:ci": "npm run lint:script -- --max-warnings 0",
-    "build": "tsc",
-    "example": "node ./example/main.js"
+    "build": "tsc"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wxpwxpwxp/astDemo.git"
+    "url": "git+https://github.com/wxpwxpwxp/wxp-reactivity.git"
   },
   "author": "lxrwxp",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/wxpwxpwxp/astDemo/issues"
+    "url": "https://github.com/wxpwxpwxp/wxp-reactivity/issues"
   },
-  "homepage": "https://github.com/wxpwxpwxp/astDemo#readme",
+  "homepage": "https://github.com/wxpwxpwxp/wxp-reactivity#readme",
   "devDependencies": {
     "@babel/preset-env": "^7.13.12",
     "@types/jest": "^26.0.23",
