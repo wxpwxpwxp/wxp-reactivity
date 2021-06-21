@@ -1,4 +1,4 @@
-import { ComputedRef } from './computed.js';
+import { ComputedRef } from './computed';
 import { Ref } from './ref';
 
 type Dep = Set<ReactiveEffect>
@@ -12,17 +12,23 @@ export interface ReactiveEffect<T = unknown> {
   id: number;
 }
 
-const effectStack = [];
+const effectStack: ReactiveEffect[] = [];
 let activeEffect: ReactiveEffect | undefined;
 
 let uid = 0;
 
 export function createEffect<T>(fn: () => T): ReactiveEffect<T> {
   const effect = () => {
-    enableTrack();
-    effectStack.push(effect);
-    activeEffect = effect;
-    return fn();
+    try {
+      enableTrack();
+      effectStack.push(effect);
+      activeEffect = effect;
+      return fn();
+    } finally {
+      effectStack.pop();
+      resetTracking();
+      activeEffect = effectStack[effectStack.length - 1];
+    }
   };
   effect.id = uid ++;
   effect.deps = [] as Dep[];
@@ -30,10 +36,10 @@ export function createEffect<T>(fn: () => T): ReactiveEffect<T> {
   return effect;
 }
 
-let shoudTrack = true;
+let shouldTrack = true;
 
 export function track<T>(target: ComputedRef<T> | Ref<T>): void {
-  if (!shoudTrack || activeEffect === undefined) return;
+  if (!shouldTrack || activeEffect === undefined) return;
 
   let depsMap = targetMap.get(target);
   if (!depsMap) {
@@ -42,15 +48,23 @@ export function track<T>(target: ComputedRef<T> | Ref<T>): void {
 
 }
 
+const trackStack: boolean[] = [];
 
-function enableTrack() {
-  shoudTrack = true;
+export function pauseTrack(): void {
+  trackStack.push(shouldTrack);
+  shouldTrack = false;
 }
 
-function stopTrack() {
-  shoudTrack = false;
+export function enableTrack(): void {
+  trackStack.push(shouldTrack);
+  shouldTrack = true;
 }
 
-export function trigger() {
+export function resetTracking(): void {
+  const last = trackStack.pop();
+  shouldTrack = last === undefined ? true : last;
+}
 
+export function trigger(): void {
+  return;
 }
