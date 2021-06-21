@@ -19,29 +19,35 @@
 // }
 
 import { PROXY_KEY, ORIGINAL_KEY } from './constants';
+import { track, trigger } from './effect';
 
 export interface Ref<T> {
-  _value: T;
+  [ORIGINAL_KEY]: T;
   _isRef: boolean;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any;
+  [PROXY_KEY]: any;
 }
 
 export function ref<T>(value: T): Ref<T> {
-  const target = new Proxy({
-    _value: value,
+  const target = {
+    [ORIGINAL_KEY]: value,
     _isRef: true,
-    value: undefined
-  }, {
-    get(target, key) {
-      if (key === PROXY_KEY)
+    [PROXY_KEY]: undefined
+  };
+
+  return new Proxy(target, {
+    get(_, key) {
+      if (key === PROXY_KEY) {
+        track(target);
         return target[ORIGINAL_KEY];
+      }
     },
-    set(target, key, newVal) {
-      if (key === PROXY_KEY)
+    set(_, key, newVal) {
+      if (key === PROXY_KEY) {
         target[ORIGINAL_KEY] = newVal;
+        trigger(target);
+      }
       return true;
     }
   });
-  return target;
 }

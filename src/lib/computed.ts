@@ -1,6 +1,6 @@
 
-import { PROXY_KEY } from './constants';
-import { createEffect, track } from './effect';
+import { ORIGINAL_KEY, PROXY_KEY } from './constants';
+import { createEffect, track, trigger } from './effect';
 
 type Getter<T> = () => T;
 type Setter = () => unknown
@@ -12,9 +12,9 @@ export interface ComputedOptions<T> {
 
 export interface ComputedRef<T> {
   _isRef: boolean;
-  _value: T;
+  [ORIGINAL_KEY]: T;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  value: any;
+  [PROXY_KEY]: any;
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -31,26 +31,40 @@ export function computed<T>(optionsOrGetter: ComputedOptions<T> | Getter<T>): Co
     setter = optionsOrGetter.set;
   }
 
-  const effect = createEffect(getter);
-  const target = new Proxy({
+  let dirty = false;
+  const effect = _effect();
+  const target = {
     _isRef: true,
-    effect: effect,
-    _value: undefined as unknown,
-    value: undefined
-  } as ComputedRef<T>, {
-    get(target, key) {
+    [ORIGINAL_KEY]: effect(),
+    [PROXY_KEY]: undefined,
+  };
+  const targetProxy = new Proxy(target, {
+    get(_, key) {
       if (key === PROXY_KEY) {
-        target._value = effect();
+        if (dirty) {
+          target[ORIGINAL_KEY] = effect();
+          dirty = false;
+        }
         track(target);
-        return getter();
+        return target[ORIGINAL_KEY];
       }
     },
-    set(target, key) {
-      if (key === PROXY_KEY)
+    set(_, key) {
+      if (key === PROXY_KEY) {
         setter();
+        trigger(target);
+      }
       return true;
     }
   });
 
-  return target;
+  function _effect() {
+    return createEffect(getter, ()=> {
+      dirty = true;
+      targetProxy[PROXY_KEY];
+      trigger(target);
+    });
+  }
+
+  return targetProxy;
 }
