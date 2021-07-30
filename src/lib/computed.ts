@@ -39,7 +39,7 @@ export function computed<T>(optionsOrGetter: ComputedOptions<T> | Getter<T>): Co
     [PROXY_KEY]: undefined,
   };
   const targetProxy = new Proxy(target, {
-    get(_, key) {
+    get(_, key, receiver) {
       if (key === PROXY_KEY) {
         if (dirty) {
           target[ORIGINAL_KEY] = effect();
@@ -48,6 +48,8 @@ export function computed<T>(optionsOrGetter: ComputedOptions<T> | Getter<T>): Co
         track(target);
         return target[ORIGINAL_KEY];
       }
+      const res = Reflect.get(_, key, receiver);
+      if (res) return res;
     },
     set(_, key) {
       if (key === PROXY_KEY) {
