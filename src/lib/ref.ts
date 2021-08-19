@@ -18,8 +18,10 @@
 //   }
 // }
 
+import { isObject } from '../shared';
 import { PROXY_KEY, ORIGINAL_KEY } from './constants';
 import { track, trigger } from './effect';
+import { reactive, ReactiveFlags, Target } from './reactive';
 
 export interface Ref<T> {
   [ORIGINAL_KEY]: T;
@@ -34,6 +36,10 @@ export function ref<T>(value: T): Ref<T> {
     _isRef: true,
     [PROXY_KEY]: undefined
   };
+
+  if (isObject(value) && !(value as Target)[ReactiveFlags.IS_REACTIVE]) {
+    return ref(reactive(value));
+  }
 
   return new Proxy(target, {
     get(_, key, receiver) {
@@ -62,5 +68,6 @@ export function isRef<T>(ref: Ref<T> | unknown): boolean {
 }
 
 export function unref<T>(ref: T): T extends Ref<infer V> ? V : T {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return isRef(ref) ? (ref as any).value : ref;
 }

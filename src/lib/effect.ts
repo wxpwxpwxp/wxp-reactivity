@@ -2,9 +2,9 @@ import { ComputedRef } from './computed';
 import { Ref } from './ref';
 
 type Dep = Set<ReactiveEffect>
-// type KeyToDepMap = Set<Dep>
+type KeyToDepMap = Map<any, Dep>
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const targetDepMap = new WeakMap<any, Dep>();
+const targetDepMap = new WeakMap<any, KeyToDepMap>();
 
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -42,17 +42,22 @@ export function createEffect<T>(fn: () => T, scheduler: () => void): ReactiveEff
 
 let shouldTrack = true;
 
-export function track<T>(target: ComputedRef<T> | Ref<T>): void {
+export function track<T>(target: ComputedRef<T> | Ref<T> | object, key: string | symbol = 'value'): void {
   if (!shouldTrack || activeEffect === undefined) return;
 
-  let deps = targetDepMap.get(target);
-  if (!deps) {
-    targetDepMap.set(target, (deps = new Set()));
+  let depsMap = targetDepMap.get(target);
+  if (!depsMap) {
+    targetDepMap.set(target, (depsMap = new Map()));
   }
 
-  if (!deps.has(activeEffect)) {
-    deps.add(activeEffect);
-    activeEffect.deps.push(deps);
+  let dep = depsMap.get(key);
+  if (!dep) {
+    depsMap.set(key, (dep = new Set()));
+  }
+
+  if (!dep.has(activeEffect)) {
+    dep.add(activeEffect);
+    activeEffect.deps.push(dep);
   }
 }
 
@@ -83,9 +88,13 @@ export function resetTracking(): void {
   shouldTrack = last === undefined ? true : last;
 }
 
-export function trigger<T>(target: ComputedRef<T> | Ref<T>): void {
-  const deps = targetDepMap.get(target);
+export function trigger<T>(target: ComputedRef<T> | Ref<T> | object, key: string | symbol = 'value'): void {
+  const depsMap = targetDepMap.get(target);
+  if (!depsMap) {
+    return;
+  }
 
+  const deps = depsMap.get(key);
   if (!deps) {
     return;
   }
