@@ -40,6 +40,8 @@ module.exports = {
         "object-curly-spacing": ["error", "always"],
         "@typescript-eslint/member-delimiter-style": "error",
         "@typescript-eslint/no-var-requires": "off",
-        "no-unused-vars": "error"
+        "no-unused-vars": "error",
+        "@typescript-eslint/explicit-module-boundary-types": "off",
+        "@typescript-eslint/ban-types": "off"
     }
 };
